@@ -7,8 +7,14 @@
     "init-db": "node scripts/init-db.js"
   },
   "dependencies": {
+    "mysql2": "^3.15.3",
     "next": "^16.0.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.5",
+    "typescript": "5.9.3"
   }
 }
