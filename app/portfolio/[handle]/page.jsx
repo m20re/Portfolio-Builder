@@ -1,7 +1,6 @@
 // app/portfolio/[handle]/page.tsx
-type Props = { params: { handle: string } };
 
-export default async function PublicPortfolio({ params }: Props) {
+export default async function PublicPortfolio({ params }) {
   const { handle } = params;
   // fetch latest public portfolio by handle from DB
   return (

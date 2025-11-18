@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* your custom global styles here */
+body {
+  background: #f9fafb;
+  margin: 0%;
+}
