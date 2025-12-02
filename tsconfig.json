@@ -30,7 +30,7 @@
     "**/*.mts",
     "**/*.ts",
     "**/*.tsx"
-, "app/components/Navbar.jsx", "components/PortfolioEditor.jsx", "app/portfolio/[handle]/page.jsx", "app/builder/page.jsx", "components/Navbar.jsx"  ],
+, "app/components/Navbar.jsx", "components/PortfolioEditor.jsx", "app/portfolio/[handle]/page.jsx", "app/builder/[section]/page.jsx", "components/Navbar.jsx"  ],
   "exclude": [
     "node_modules"
   ]

@@ -1,14 +1,11 @@
 "use client";
 
+import { useNavItems } from "./NavItemsContext";
+import { Box, Button, TextField,Stack,Slider,ToggleButton,ToggleButtonGroup } from "@mui/material";
+
+
 import { useState, useRef, useEffect } from "react";
 import { Stage, Layer, Rect, Text, Transformer } from "react-konva";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
-import Slider from "@mui/material/Slider";
-import TextField from "@mui/material/TextField";
-import ToggleButton from "@mui/material/ToggleButton";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 450;
@@ -50,7 +47,7 @@ function SelectionTransformer({ selectedId }) {
     </Layer>
   );
 }
-export default function Editor(){
+export default function Editor({sectionKey}) {
     const [elements, setElements] = useState([
     {
       id: "title",
@@ -158,8 +155,87 @@ export default function Editor(){
     alert("In a real app, send this JSON to your API:\n\n" + JSON.stringify(layout, null, 2));
   };
 
+
+
+  const { navItems, updateLabel } = useNavItems();
+
+  // Find the nav item for this sectionKey (slug)
+  const currentItem = navItems.find((item) => item.slug === sectionKey);
+  const currentLabel = currentItem?.label || sectionKey;
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftLabel, setDraftLabel] = useState(currentLabel);
+
+  // Keep draftLabel in sync if navItems change
+  useEffect(() => {
+    setDraftLabel(currentLabel);
+  }, [currentLabel]);
+
+  const handleSave = () => {
+    updateLabel(sectionKey, draftLabel.trim() || currentLabel);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setDraftLabel(currentLabel);
+    setIsEditing(false);
+  };
+
   return (
-    <Box
+    <div>
+      {/* Title row */}
+      <Box
+        sx={{
+          mb: 3,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+        }}
+      >
+        {!isEditing ? (
+          <>
+            <h2 className="text-xl font-semibold">
+              This is <span className="font-bold">{currentLabel}</span> page
+            </h2>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setIsEditing(true)}
+            >
+              Edit title
+            </Button>
+          </>
+        ) : (
+          <>
+            <TextField
+              size="small"
+              label="Section title"
+              value={draftLabel}
+              onChange={(e) => setDraftLabel(e.target.value)}
+              sx={{ flexGrow: 1 }}
+            />
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleSave}
+              >
+                Save
+              </Button>
+              <Button
+                variant="text"
+                size="small"
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
+            </Box>
+          </>
+        )}
+      </Box>
+
+         <Box
       sx={{
         display: "grid",
         gridTemplateColumns: "minmax(0, 1.5fr) 320px",
@@ -368,5 +444,11 @@ export default function Editor(){
         )}
       </Box>
     </Box>
+
+      <div>
+        {/* For now just show the section key */}
+        <p>Section key (slug): {sectionKey}</p>
+      </div>
+    </div>
   );
 }
