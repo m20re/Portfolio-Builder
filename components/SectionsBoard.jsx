@@ -7,6 +7,7 @@ export default function SectionsBoard({
   sections,
   onSizeCommit,
   onAddSection,
+  onUpdateSection
 }) {
   return (
     <Box
@@ -25,6 +26,7 @@ export default function SectionsBoard({
           key={section.id}
           section={section}
           onSizeCommit={onSizeCommit}
+          onUpdateSection={onUpdateSection}
         />
       ))}
 

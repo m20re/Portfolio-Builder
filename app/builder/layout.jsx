@@ -1,8 +1,10 @@
 "use client";
-
+import dynamic from "next/dynamic";
 import { NavItemsProvider } from '../../components/NavItemsContext';
-import PortfolioNavbar from '../../components/PortfolioNavbar';
-
+const PortfolioNavbar = dynamic(
+  () => import("../../components/PortfolioNavbar"),
+  { ssr: false } // 🔴 disable SSR for this component
+);
 export default function BuilderLayout({ children }) {
   return (
     <NavItemsProvider>

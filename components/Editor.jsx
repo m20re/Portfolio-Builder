@@ -20,9 +20,18 @@ export default function Editor({ sectionKey }) {
   const [draftLabel, setDraftLabel] = useState(currentLabel);
 
   // Sections inside this page
-    const [sections, setSections] = useState([
-    { id: 1, title: "Section 1", width: 600, height: 250 },
-  ]);
+  const [sections, setSections] = useState([
+  {
+    id: "section-1",
+    title: "Section 1",
+    width: 600,
+    height: 250,
+    content: "<p>Hello world</p>",   // 👈 This will show up in the editor & view
+    images: [],
+  },
+]);
+
+
 
 
   // keep draftLabel in sync if nav item label changes
@@ -41,18 +50,26 @@ export default function Editor({ sectionKey }) {
     setIsEditing(false);
   };
 
-  const handleAddSection = () => {
-    const nextIndex = sections.length + 1;
-    const newSection = {
-      id: `section-${nextIndex}`,
-      title: `Section ${nextIndex}`,
-      width: 600,
-      height: 250,
-    };
-    const updated = [...sections, newSection];
-    setSections(updated);
-    console.log("Sections after add:", updated);
+const handleAddSection = () => {
+  const nextIndex = sections.length + 1;
+  const newSection = {
+    id: `section-${nextIndex}`,
+    title: `Section ${nextIndex}`,
+    width: 600,
+    height: 250,
+    content: "",   // 👈 start empty, but ready
+    images: [],
   };
+  setSections((prev) => [...prev, newSection]);
+};
+  const handleUpdateSection = (id, changes) => {
+  const updated = sections.map((sec) =>
+    sec.id === id ? { ...sec, ...changes } : sec
+  );
+  setSections(updated);
+  console.log("Sections after update:", updated);
+};
+
 
   const handleSizeCommit = (id, e) => {
     const el = e.currentTarget;
@@ -117,6 +134,7 @@ export default function Editor({ sectionKey }) {
         sections={sections}
         onSizeCommit={handleSizeCommit}
         onAddSection={handleAddSection}
+        onUpdateSection={handleUpdateSection}
       />
     </div>
   );
