@@ -1,3 +1,4 @@
+// components/SectionCard.jsx
 "use client";
 
 import * as React from "react";
@@ -9,18 +10,22 @@ import {
   MenuItem,
   Divider,
   Box,
-  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Chip,
 } from "@mui/material";
 import { styled, alpha } from "@mui/material/styles";
 import EditIcon from "@mui/icons-material/Edit";
 import ArchiveIcon from "@mui/icons-material/Archive";
+import UnarchiveIcon from "@mui/icons-material/Unarchive";
 import FileCopyIcon from "@mui/icons-material/FileCopy";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import FormatBoldIcon from "@mui/icons-material/FormatBold";
-import FormatItalicIcon from "@mui/icons-material/FormatItalic";
-import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
-import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+
+import RichTextEditor from "./RichTextEditor";
 
 const StyledMenu = styled((props) => (
   <Menu
@@ -66,23 +71,16 @@ export default function SectionCard({
   section,
   onSizeCommit,
   onUpdateSection,
+  onDuplicateSection,
+  onDeleteSection,
+  onToggleArchive,
 }) {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [isEditing, setIsEditing] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
-  const editorRef = React.useRef(null);
   const open = Boolean(anchorEl);
-
-  const [draftContent, setDraftContent] = React.useState(section.content);
-
-  React.useEffect(() => {
-    if (isEditing) {
-      setDraftContent(section.content || "");
-      if (editorRef.current) {
-        editorRef.current.innerHTML = section.content || "";
-      }
-    }
-  }, [isEditing]);
+  const isArchived = section.archived;
 
   const handleClickMenuButton = (event) => {
     setAnchorEl(event.currentTarget);
@@ -96,40 +94,41 @@ export default function SectionCard({
     handleCloseMenu();
   };
 
-  // 🔹 Sync editor DOM with section.content whenever we enter edit mode
-  React.useEffect(() => {
-    if (isEditing && editorRef.current) {
-      editorRef.current.innerHTML = section.content || "";
-    }
-  }, [isEditing, section.content]);
-
-  // basic formatting using document.execCommand
-  const applyCommand = (command) => {
-    document.execCommand(command, false, null);
-    if (editorRef.current) {
-      const html = editorRef.current.innerHTML;
-      onUpdateSection(section.id, { content: html });
-    }
+  const handleClickDuplicate = () => {
+    onDuplicateSection(section.id);
+    handleCloseMenu();
   };
 
-  const handleContentInput = () => {
-    if (editorRef.current) {
-      setDraftContent(editorRef.current.innerHTML);
-    }
+  const handleClickArchive = () => {
+    onToggleArchive(section.id);
+    handleCloseMenu();
   };
 
-  const handleImageUpload = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleClickDelete = () => {
+    setDeleteDialogOpen(true);
+    handleCloseMenu();
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
+    onDeleteSection(section.id);
+    setDeleteDialogOpen(false);
+  };
+
+  // When editor saves, update section content
+  const handleRichContentChange = (html) => {
+    onUpdateSection(section.id, { content: html });
+  };
+
+  // For uploads: update section.images and return URL so editor can insert
+  const handleImageUpload = (file) => {
     const url = URL.createObjectURL(file);
-
     const images = [...(section.images || []), { id: Date.now(), url }];
     onUpdateSection(section.id, { images });
-  };
-
-  const handleDoneEditing = () => {
-    onUpdateSection(section.id, { content: draftContent });
-    setIsEditing(false);
+    return url; // used by RichTextEditor to insert <img>
   };
 
   return (
@@ -137,7 +136,6 @@ export default function SectionCard({
       sx={{
         position: "relative",
         width: section.width,
-        height: section.height,
         minWidth: 300,
         minHeight: 150,
         p: 2,
@@ -146,11 +144,15 @@ export default function SectionCard({
         overflow: "auto",
         boxSizing: "border-box",
         flex: "0 0 auto",
+        opacity: isArchived ? 0.6 : 1,
+        borderStyle: isArchived ? "dashed" : "solid",
+        borderWidth: 1,
+        borderColor: "rgba(0,0,0,0.2)",
       }}
       onMouseUp={(e) => onSizeCommit(section.id, e)}
     >
       {/* Top-right Options button */}
-      {!isEditing && <Box
+      <Box
         sx={{
           position: "absolute",
           top: 8,
@@ -185,103 +187,63 @@ export default function SectionCard({
             <EditIcon />
             Edit
           </MenuItem>
-          <MenuItem onClick={handleCloseMenu} disableRipple>
+          <MenuItem onClick={handleClickDuplicate} disableRipple>
             <FileCopyIcon />
             Duplicate
           </MenuItem>
           <Divider sx={{ my: 0.5 }} />
-          <MenuItem onClick={handleCloseMenu} disableRipple>
-            <ArchiveIcon />
-            Archive
+          <MenuItem onClick={handleClickArchive} disableRipple>
+            {isArchived ? <UnarchiveIcon /> : <ArchiveIcon />}
+            {isArchived ? "Unarchive" : "Archive"}
           </MenuItem>
-          <MenuItem onClick={handleCloseMenu} disableRipple>
-            <MoreHorizIcon />
-            More
+          <MenuItem onClick={handleClickDelete} disableRipple>
+            <DeleteIcon />
+            Delete
           </MenuItem>
         </StyledMenu>
-      </Box>}
+      </Box>
 
-      {/* Title */}
-      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-        {section.title}
-      </Typography>
+      {/* Delete confirm dialog */}
+      <Dialog open={deleteDialogOpen} onClose={handleCancelDelete}>
+        <DialogTitle>Delete section?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete <strong>{section.title}</strong>?
+            This cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete}>No</Button>
+          <Button color="error" onClick={handleConfirmDelete} autoFocus>
+            Yes, delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Title + archived chip */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          mb: 1,
+        }}
+      >
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          {section.title}
+        </Typography>
+        {isArchived && <Chip label="Archived" size="small" />}
+      </Box>
 
       {/* Content area */}
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
         {isEditing ? (
-          <>
-            {/* Toolbar */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                mb: 1,
-              }}
-            >
-              <IconButton size="small" onClick={() => applyCommand("bold")}>
-                <FormatBoldIcon fontSize="small" />
-              </IconButton>
-              <IconButton size="small" onClick={() => applyCommand("italic")}>
-                <FormatItalicIcon fontSize="small" />
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={() => applyCommand("underline")}
-              >
-                <FormatUnderlinedIcon fontSize="small" />
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={() => applyCommand("insertUnorderedList")}
-              >
-                <FormatListBulletedIcon fontSize="small" />
-              </IconButton>
-
-              <Button
-                variant="outlined"
-                size="small"
-                component="label"
-                sx={{ ml: "auto" }}
-              >
-                Upload image
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                />
-              </Button>
-            </Box>
-
-            {/* Editable content area */}
-            <Box
-              ref={editorRef}
-              contentEditable
-              suppressContentEditableWarning
-              onInput={handleContentInput}
-              sx={{
-                border: "1px solid rgba(0,0,0,0.2)",
-                borderRadius: 1,
-                p: 1,
-                minHeight: 80,
-                fontSize: 14,
-                "&:focus": {
-                  outline: "2px solid #3b82f6",
-                },
-              }}
-            />
-
-            <Box sx={{ mt: 1, display: "flex", justifyContent: "flex-end" }}>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleDoneEditing}
-              >
-                Done
-              </Button>
-            </Box>
-          </>
+          <RichTextEditor
+            initialValue={section.content || ""}
+            onChange={handleRichContentChange}
+            onDone={() => setIsEditing(false)}
+            onImageUpload={handleImageUpload}
+          />
         ) : (
           <>
             {section.content ? (

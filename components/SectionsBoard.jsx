@@ -7,7 +7,10 @@ export default function SectionsBoard({
   sections,
   onSizeCommit,
   onAddSection,
-  onUpdateSection
+  onUpdateSection,
+  onDuplicateSection,
+  onDeleteSection,
+  onToggleArchive,
 }) {
   return (
     <Box
@@ -27,6 +30,9 @@ export default function SectionsBoard({
           section={section}
           onSizeCommit={onSizeCommit}
           onUpdateSection={onUpdateSection}
+          onDuplicateSection={onDuplicateSection}
+          onDeleteSection={onDeleteSection}
+          onToggleArchive={onToggleArchive}
         />
       ))}
 

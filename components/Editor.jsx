@@ -2,11 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavItems } from "./NavItemsContext";
-import {
-  Box,
-  Button,
-  TextField,
-} from "@mui/material";
+import { Box, Button, TextField } from "@mui/material";
 import SectionsBoard from "./SectionsBoard";
 
 export default function Editor({ sectionKey }) {
@@ -21,18 +17,15 @@ export default function Editor({ sectionKey }) {
 
   // Sections inside this page
   const [sections, setSections] = useState([
-  {
-    id: "section-1",
-    title: "Section 1",
-    width: 600,
-    height: 250,
-    content: "<p>Hello world</p>",   // 👈 This will show up in the editor & view
-    images: [],
-  },
-]);
-
-
-
+    {
+      id: "section-1",
+      title: "Section 1",
+      width: 600,
+      height: 250,
+      content: "<p>Hello world</p>", // 👈 This will show up in the editor & view
+      images: [],
+    },
+  ]);
 
   // keep draftLabel in sync if nav item label changes
   useEffect(() => {
@@ -50,26 +43,29 @@ export default function Editor({ sectionKey }) {
     setIsEditing(false);
   };
 
-const handleAddSection = () => {
-  const nextIndex = sections.length + 1;
-  const newSection = {
-    id: `section-${nextIndex}`,
-    title: `Section ${nextIndex}`,
-    width: 600,
-    height: 250,
-    content: "",   // 👈 start empty, but ready
-    images: [],
+  const handleAddSection = () => {
+    const nextIndex = sections.length + 1;
+    const newSection = {
+      id: `section-${Date.now()}`, // unique
+      title: `Section ${nextIndex}`,
+      width: 600,
+      height: 250,
+      content: "",
+      images: [],
+      archived: false, // 🔹
+    };
+    const updated = [...sections, newSection];
+    setSections(updated);
+    console.log("Sections after add:", updated);
   };
-  setSections((prev) => [...prev, newSection]);
-};
-  const handleUpdateSection = (id, changes) => {
-  const updated = sections.map((sec) =>
-    sec.id === id ? { ...sec, ...changes } : sec
-  );
-  setSections(updated);
-  console.log("Sections after update:", updated);
-};
 
+  const handleUpdateSection = (id, changes) => {
+    const updated = sections.map((sec) =>
+      sec.id === id ? { ...sec, ...changes } : sec
+    );
+    setSections(updated);
+    console.log("Sections after update:", updated);
+  };
 
   const handleSizeCommit = (id, e) => {
     const el = e.currentTarget;
@@ -83,6 +79,40 @@ const handleAddSection = () => {
     console.log("Sections after resize:", updated);
   };
 
+  // Duplicate: clone section and insert right below it
+  const handleDuplicateSection = (id) => {
+    setSections((prev) => {
+      const idx = prev.findIndex((sec) => sec.id === id);
+      if (idx === -1) return prev;
+
+      const original = prev[idx];
+      const copy = {
+        ...original,
+        id: `section-${Date.now()}`, // new id
+        title: `${original.title} (copy)`,
+        archived: false,
+      };
+
+      const next = [...prev];
+      next.splice(idx + 1, 0, copy);
+      console.log("Sections after duplicate:", next);
+      return next;
+    });
+  };
+
+  // Delete: remove section by id
+  const handleDeleteSection = (id) => {
+    setSections((prev) => prev.filter((sec) => sec.id !== id));
+  };
+
+  // Archive toggle: flip archived boolean
+  const handleToggleArchive = (id) => {
+    setSections((prev) =>
+      prev.map((sec) =>
+        sec.id === id ? { ...sec, archived: !sec.archived } : sec
+      )
+    );
+  };
 
   return (
     <div>
@@ -135,6 +165,9 @@ const handleAddSection = () => {
         onSizeCommit={handleSizeCommit}
         onAddSection={handleAddSection}
         onUpdateSection={handleUpdateSection}
+        onDuplicateSection={handleDuplicateSection}
+        onDeleteSection={handleDeleteSection}
+        onToggleArchive={handleToggleArchive}
       />
     </div>
   );
