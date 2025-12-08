@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { authenticate } from '@/lib/auth';
+import { prisma } from '../../../../lib/db.js';
+import { authenticate } from '../../../../lib/auth.js';
 
 // GET /api/portfolios/[id] - Get a single portfolio
-export async function GET(request, { params }) {
+export async function GET(request, context) {
   try {
+    const params = await context.params;
     const { id } = params;
 
     const portfolio = await prisma.portfolio.findUnique({
@@ -33,10 +34,9 @@ export async function GET(request, { params }) {
       );
     }
 
-    // If portfolio is not published, require authentication and ownership
     if (!portfolio.isPublished) {
       const user = await authenticate(request);
-
+      
       if (!user || user.id !== portfolio.userId) {
         return NextResponse.json(
           { error: 'Unauthorized' },
@@ -57,10 +57,10 @@ export async function GET(request, { params }) {
 }
 
 // PUT /api/portfolios/[id] - Update a portfolio
-export async function PUT(request, { params }) {
+export async function PUT(request, context) {
   try {
     const user = await authenticate(request);
-
+    
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -68,10 +68,10 @@ export async function PUT(request, { params }) {
       );
     }
 
+    const params = await context.params;
     const { id } = params;
     const body = await request.json();
 
-    // Check ownership
     const existingPortfolio = await prisma.portfolio.findUnique({
       where: { id }
     });
@@ -90,7 +90,6 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Build update data
     const { title, description, theme, isPublished } = body;
     const updateData = {};
 
@@ -99,7 +98,6 @@ export async function PUT(request, { params }) {
     if (theme !== undefined) updateData.theme = theme;
     if (isPublished !== undefined) updateData.isPublished = isPublished;
 
-    // Update portfolio
     const portfolio = await prisma.portfolio.update({
       where: { id },
       data: updateData,
@@ -128,10 +126,10 @@ export async function PUT(request, { params }) {
 }
 
 // DELETE /api/portfolios/[id] - Delete a portfolio
-export async function DELETE(request, { params }) {
+export async function DELETE(request, context) {
   try {
     const user = await authenticate(request);
-
+    
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -139,9 +137,9 @@ export async function DELETE(request, { params }) {
       );
     }
 
+    const params = await context.params;
     const { id } = params;
 
-    // Check ownership
     const existingPortfolio = await prisma.portfolio.findUnique({
       where: { id }
     });
@@ -160,7 +158,6 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // Delete portfolio (cascade will delete related sections and projects)
     await prisma.portfolio.delete({
       where: { id }
     });
