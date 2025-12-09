@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { authAPI } from '../../lib/api';
@@ -20,22 +20,31 @@ import {
   Divider,
   CircularProgress,
   Avatar,
+  IconButton,
+  Badge,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, logout, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, logout, isAuthenticated, loading: authLoading, refreshUser } = useAuth();
+  const fileInputRef = useRef(null);
 
   // Profile form
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
+  const [profilePicture, setProfilePicture] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState('');
   const [profileError, setProfileError] = useState('');
+
+  // Picture upload
+  const [uploadingPicture, setUploadingPicture] = useState(false);
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState('');
@@ -61,8 +70,84 @@ export default function SettingsPage() {
     if (user) {
       setName(user.name);
       setUsername(user.username);
+      setProfilePicture(user.profilePicture);
     }
   }, [user]);
+
+  const handleProfilePictureUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setProfileError('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setProfileError('Image must be less than 5MB');
+      return;
+    }
+
+    setUploadingPicture(true);
+    setProfileError('');
+
+    try {
+      const reader = new FileReader();
+
+      reader.onload = async (e) => {
+        const base64Image = e.target.result;
+
+        try {
+          const response = await authAPI.uploadProfilePicture(base64Image);
+          console.log('Upload response:', response);
+
+          setProfilePicture(response.user.profilePicture);
+          setProfileSuccess('Profile picture updated!');
+
+          // Refresh user data in context
+          if (refreshUser) {
+            await refreshUser();
+            console.log('User refreshed');
+          }
+        } catch (err) {
+          console.error('Upload error:', err);
+          setProfileError(err.message || 'Failed to upload picture');
+        } finally {
+          setUploadingPicture(false);
+        }
+      };
+
+      reader.onerror = () => {
+        setProfileError('Failed to read file');
+        setUploadingPicture(false);
+      };
+
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setProfileError('Failed to upload picture');
+      setUploadingPicture(false);
+    }
+  };
+
+  const handleRemoveProfilePicture = async () => {
+    setUploadingPicture(true);
+    try {
+      await authAPI.removeProfilePicture();
+      setProfilePicture(null);
+      setProfileSuccess('Profile picture removed');
+
+      // Refresh user data in context
+      if (refreshUser) {
+        await refreshUser();
+      }
+    } catch (err) {
+      setProfileError('Failed to remove picture');
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
@@ -73,11 +158,11 @@ export default function SettingsPage() {
     try {
       await authAPI.updateProfile(name, username);
       setProfileSuccess('Profile updated successfully!');
-      
+
       // Refresh user data
-      const updatedUser = await authAPI.getCurrentUser();
-      // Note: You'd need to update the AuthContext here
-      
+      if (refreshUser) {
+        await refreshUser();
+      }
     } catch (err) {
       setProfileError(err.message || 'Failed to update profile');
     } finally {
@@ -160,14 +245,61 @@ export default function SettingsPage() {
       {/* Profile Section */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-          <Avatar sx={{ width: 60, height: 60, bgcolor: 'primary.main' }}>
-            <PersonIcon fontSize="large" />
-          </Avatar>
-          <Box>
+          <Badge
+            overlap="circular"
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            badgeContent={
+              <IconButton
+                size="small"
+                sx={{
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  '&:hover': { bgcolor: 'primary.dark' },
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingPicture}
+              >
+                {uploadingPicture ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <CameraAltIcon fontSize="small" />
+                )}
+              </IconButton>
+            }
+          >
+            <Avatar
+              src={profilePicture || undefined}
+              sx={{ width: 80, height: 80, bgcolor: 'primary.main', fontSize: '2rem' }}
+            >
+              {!profilePicture && user?.name?.charAt(0).toUpperCase()}
+            </Avatar>
+          </Badge>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            hidden
+            accept="image/*"
+            onChange={handleProfilePictureUpload}
+          />
+
+          <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6">{user?.name}</Typography>
             <Typography variant="body2" color="text.secondary">
               {user?.email}
             </Typography>
+            {profilePicture && (
+              <Button
+                size="small"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={handleRemoveProfilePicture}
+                disabled={uploadingPicture}
+                sx={{ mt: 0.5 }}
+              >
+                Remove Picture
+              </Button>
+            )}
           </Box>
         </Box>
 

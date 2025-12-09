@@ -64,6 +64,7 @@ export default function PublicPortfolioPage() {
         {/* Header */}
         <Paper elevation={0} sx={{ p: 6, mb: 4, textAlign: 'center', borderRadius: 3 }}>
           <Avatar
+            src={portfolio.user.profilePicture || undefined}
             sx={{
               width: 100,
               height: 100,
@@ -73,7 +74,7 @@ export default function PublicPortfolioPage() {
               fontSize: '2rem',
             }}
           >
-            {portfolio.user.name.charAt(0).toUpperCase()}
+            {!portfolio.user.profilePicture && portfolio.user.name.charAt(0).toUpperCase()}
           </Avatar>
 
           <Typography variant="h3" gutterBottom fontWeight="bold">

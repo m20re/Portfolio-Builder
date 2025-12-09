@@ -1,8 +1,7 @@
-// contexts/AuthContext.jsx
 "use client";
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '../lib/api.js';
+import { authAPI } from '../lib/api';
 
 const AuthContext = createContext(null);
 
@@ -11,14 +10,13 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Check if user is logged in on mount
   useEffect(() => {
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
       if (!token) {
         setLoading(false);
         return;
@@ -28,7 +26,6 @@ export function AuthProvider({ children }) {
       setUser(response.user);
     } catch (err) {
       console.error('Auth check failed:', err);
-      // Token might be expired, clear it
       authAPI.logout();
     } finally {
       setLoading(false);
@@ -51,12 +48,11 @@ export function AuthProvider({ children }) {
     try {
       setError(null);
       const response = await authAPI.register(email, username, name, password);
-
-      // Auto-login after registration
+      
       if (response.user) {
         await login(email, password);
       }
-
+      
       return response;
     } catch (err) {
       setError(err.message);
@@ -69,6 +65,16 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await authAPI.getCurrentUser();
+      setUser(response.user);
+      console.log('User refreshed:', response.user);
+    } catch (err) {
+      console.error('Failed to refresh user:', err);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -78,6 +84,7 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
+        refreshUser,
         isAuthenticated: !!user,
       }}
     >
