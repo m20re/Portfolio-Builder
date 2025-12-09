@@ -4,16 +4,16 @@ import { authenticate } from '../../../lib/auth.js';
 
 // POST /api/portfolios - Create a new portfolio
 export async function POST(request) {
-  console.log('📝 Portfolio creation request received');
+  console.log(' Portfolio creation request received');
 
   try {
-    console.log('🔐 Authenticating user...');
+    console.log(' Authenticating user...');
     const user = await authenticate(request);
 
     console.log('👤 User authenticated:', user ? user.id : 'null');
 
     if (!user) {
-      console.log('❌ No user found - unauthorized');
+      console.log(' No user found - unauthorized');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -21,20 +21,20 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    console.log('📦 Request body:', body);
+    console.log(' Request body:', body);
 
     const { title, description, theme } = body;
 
     // Validation
     if (!title) {
-      console.log('❌ Title is missing');
+      console.log(' Title is missing');
       return NextResponse.json(
         { error: 'Title is required' },
         { status: 400 }
       );
     }
 
-    console.log('🏷️  Generating slug for:', title);
+    console.log('  Generating slug for:', title);
 
     // Generate unique slug
     const baseSlug = title
@@ -48,7 +48,7 @@ export async function POST(request) {
     let counter = 1;
     let slugExists = true;
 
-    console.log('🔍 Checking slug availability...');
+    console.log('Checking slug availability...');
 
     while (slugExists) {
       const existing = await prisma.portfolio.findUnique({
@@ -63,8 +63,8 @@ export async function POST(request) {
       }
     }
 
-    console.log('✅ Unique slug generated:', slug);
-    console.log('💾 Creating portfolio in database...');
+    console.log(' Unique slug generated:', slug);
+    console.log(' Creating portfolio in database...');
 
     // Create portfolio
     const portfolio = await prisma.portfolio.create({
@@ -85,7 +85,7 @@ export async function POST(request) {
       }
     });
 
-    console.log('✅ Portfolio created successfully:', portfolio.id);
+    console.log(' Portfolio created successfully:', portfolio.id);
 
     return NextResponse.json(
       {
@@ -96,7 +96,7 @@ export async function POST(request) {
     );
 
   } catch (error) {
-    console.error('❌ Create portfolio error:', error);
+    console.error(' Create portfolio error:', error);
     return NextResponse.json(
       { error: 'Internal server error: ' + error.message },
       { status: 500 }

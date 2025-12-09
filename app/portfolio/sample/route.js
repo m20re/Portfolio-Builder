@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 // import { prisma } from '@/lib/db';
 // import { authenticate } from '@/lib/auth';
-import { prisma } from '../../lib/db.js';
-import { authenticate } from '../../lib/auth.js';
+import { prisma } from '../../../lib/db.js';
+import { authenticate } from '../../../lib/auth.js';
 // GET /api/portfolios - Get all portfolios for the authenticated user
 export async function GET(request) {
     try {
