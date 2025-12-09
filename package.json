@@ -11,6 +11,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.5",
+    "@mui/material-nextjs": "^7.3.6",
     "konva": "^10.0.9",
     "mysql2": "^3.15.3",
     "next": "^16.0.3",
