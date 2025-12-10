@@ -28,7 +28,7 @@ export default function PreviewPortfolioPage() {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/auth');
+      router.push('/');
     }
   }, [authLoading, isAuthenticated, router]);
 

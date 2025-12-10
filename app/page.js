@@ -1,7 +1,7 @@
 'use client'
 
 import { ArrowForward, Dashboard, Edit, Palette, Share } from '@mui/icons-material';
-import Navbar from '../components/Navbar';
+import DashboardNavbar from '../components/dashboard/DashboardNavbar';
 import { Box, Container, Typography, Button, Grid, Card, CardContent, Stack } from '@mui/material';
 import { useRouter } from 'next/navigation';
 
@@ -10,7 +10,7 @@ export default function Page() {
 
   return(
     <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
-      <Navbar/>
+      <DashboardNavbar showTabs={false} />
 
       {/* Hero Section */}
       <Box

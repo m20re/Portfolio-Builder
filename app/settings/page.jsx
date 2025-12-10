@@ -66,7 +66,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/auth');
+      router.push('/');
     }
   }, [authLoading, isAuthenticated, router]);
 
@@ -203,7 +203,7 @@ export default function SettingsPage() {
       await authAPI.deleteAccount(deletePassword);
       alert('Your account has been deleted');
       logout();
-      router.push('/auth');
+      router.push('/');
     } catch (err) {
       setDeleteError(err.message || 'Failed to delete account');
     } finally {

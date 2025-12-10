@@ -14,7 +14,7 @@ export default function BuilderPage() {
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.push('/auth');
+      router.push('/');
     }
   }, [isAuthenticated, loading, router]);
 
