@@ -57,7 +57,17 @@ export default function DashboardLayout({ children, activeTab = 0, onTabChange }
       {/* Navigation Bar */}
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="h6" sx={{ mr: 4 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              mr: 4,
+              cursor: 'pointer',
+              '&:hover': {
+                opacity: 0.8,
+              }
+            }}
+            onClick={() => router.push('/')}
+          >
             Portfolio Builder
           </Typography>
 
